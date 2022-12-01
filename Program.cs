@@ -1,10 +1,9 @@
-using api;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<ApplicationDbContext>();
 var app = builder.Build();
 
 ProductRepository.TesteInjection(app.Configuration);
@@ -28,14 +27,16 @@ app.MapPost("/products", (Product product, HttpRequest request) =>
     return Results.Created("/products" + product.Code, product.Code);
 });
 
-app.MapGet("/products", () => {
+app.MapGet("/products", () =>
+{
     return ProductRepository.GetAll();
 });
 
-app.MapGet("/products/{code}", ([FromRoute]string code) => {
-    var product =  ProductRepository.GetBy(code);
+app.MapGet("/products/{code}", ([FromRoute] string code) =>
+{
+    var product = ProductRepository.GetBy(code);
 
-    if(product != null)
+    if (product != null)
     {
         return Results.Ok(product);
     }
@@ -45,19 +46,22 @@ app.MapGet("/products/{code}", ([FromRoute]string code) => {
 
 
 
-app.MapPut("/products", ([FromBody]Product product) => {
+app.MapPut("/products", ([FromBody] Product product) =>
+{
     var result = ProductRepository.GetBy(product.Code);
     result.Name = product.Name;
     return result;
 });
 
-app.MapDelete("/products/{code}", ([FromRoute]string code) => {
-  
+app.MapDelete("/products/{code}", ([FromRoute] string code) =>
+{
+
     ProductRepository.Remove(code);
 
 });
 
-app.MapGet("/query", ([FromQuery] string name) => {
+app.MapGet("/query", ([FromQuery] string name) =>
+{
 
     return name;
 });
@@ -68,7 +72,7 @@ app.Run();
 
 public static class ProductRepository
 {
-    public static List<Product> Products { get; set; }
+    public static List<Product>? Products { get; set; }
 
     public static void Add(Product product)
     {
@@ -85,7 +89,7 @@ public static class ProductRepository
     }
 
     public static Product? GetBy(string code)
-    {   
+    {
         return Products.FirstOrDefault(p => p.Code == code);
     }
 
@@ -96,19 +100,20 @@ public static class ProductRepository
 
     public static string Remove(string code)
     {
-      Product? product =   Products.FirstOrDefault(v => v.Code == code);
+        Product? product = Products.FirstOrDefault(v => v.Code == code);
 
-        if(product != null)
+        if (product != null)
         {
             Products.Remove(product);
             return "Sucess";
         }
         return "Error";
-        
+
     }
 }
 public class Product
 {
+    public int Id { get; set; }
     public string? Code { get; set; }
     public string? Name { get; set; }
 
@@ -116,5 +121,10 @@ public class Product
 
 public class ApplicationDbContext : DbContext
 {
-    public DbSet<Product> Products { get; set; }
+    public DbSet<Product>? Products { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseSqlServer("Server=localhost;Database=Products;User Id=sqlserver;Password=It@lo445;");
+    }
 }
